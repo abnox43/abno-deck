@@ -1,5 +1,53 @@
 ABNO DECK
 MADE BY ME
+*THE ESP 32 DEV MODULE CODE*
+' 
+const int buttons[] = {18, 19, 21, 22};
+const int buttonCount = 4;
+
+int lastReading[buttonCount] = {HIGH, HIGH, HIGH, HIGH};
+int stableState[buttonCount] = {HIGH, HIGH, HIGH, HIGH};
+unsigned long lastChange[buttonCount] = {0, 0, 0, 0};
+
+const unsigned long debounceMs = 35;
+
+void setup() {
+  Serial.begin(115200);
+
+  for (int i = 0; i < buttonCount; i++) {
+    pinMode(buttons[i], INPUT_PULLUP);
+  }
+
+  delay(300);
+  Serial.println("ABNODECK:READY");
+}
+
+void loop() {
+  unsigned long now = millis();
+
+  for (int i = 0; i < buttonCount; i++) {
+    int reading = digitalRead(buttons[i]);
+
+    if (reading != lastReading[i]) {
+      lastChange[i] = now;
+      lastReading[i] = reading;
+    }
+
+    if ((now - lastChange[i]) >= debounceMs &&
+        reading != stableState[i]) {
+      stableState[i] = reading;
+
+      // INPUT_PULLUP means LOW = pressed.
+      if (stableState[i] == LOW) {
+        Serial.print("BUTTON:");
+        Serial.println(i + 1);
+      }
+    }
+  }
+} '
+
+
+
 A DIY 4-key stream deck for Linux + ESP32.
 ABNO DECK is a desktop controller for a homemade stream deck: an ESP32 development board with four push buttons, connected over USB. Pressing a physical key launches applications, opens websites, sends keyboard shortcuts, controls media or runs a validated command — and the on-screen deck shows exactly what each key does.
 Python 3 · PySide6 GUI · pyserial · JSON configuration
