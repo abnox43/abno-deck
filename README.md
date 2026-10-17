@@ -1,246 +1,321 @@
-ABNO DECK
-MADE BY ME
-the esp wiring 
-all four buttons share the same GND pin!
-ESP32 pin	Connect to
-GPIO 18	Button 1
-GPIO 19	Button 2
-GPIO 21	Button 3
-GPIO 22	Button 4
-GND	One side of ALL four buttons
+# ABNO DECK
 
-/*
+### A DIY 4-KEY STREAM DECK FOR LINUX
 
+**Made by ABNOX. Powered by ESP32. Built for Linux.**
 
+> # ⚠️ OPEN SOURCE DOES NOT MEAN YOU CAN CHANGE MY NAME.
+>
+> # THIS PROJECT WAS MADE BY ABNOX.
+>
+> **YOU MAY FORK, MODIFY, AND REDISTRIBUTE THIS PROJECT UNDER THE TERMS OF THE MIT LICENSE. YOU MUST PRESERVE THE APPLICABLE COPYRIGHT AND LICENSE NOTICES. DO NOT REMOVE OR MISREPRESENT THE ORIGINAL AUTHORSHIP.**
+>
+> **MY NAME IS ABNOX. GIVE CREDIT WHERE CREDIT IS DUE.**
+
+---
+
+## WHAT IS ABNO DECK?
+
+ABNO DECK is a homemade, four-button desktop controller that lets you control your Linux PC using physical buttons connected to an ESP32.
+
+Press a button to launch an application, open a website, trigger a keyboard shortcut, control media playback, or run a custom command.
+
+The project includes a Python desktop application with a dark cyberpunk/CRT interface, customizable buttons, JSON profiles, a live event log, and USB serial communication.
+
+**Built on a budget. Designed for Linux. Made by ABNOX.**
+
+## FEATURES
+
+- **4 physical buttons** powered by an ESP32.
+- **Customizable actions:** applications, websites, keyboard shortcuts, media controls, custom commands, and idle keys.
+- **Dark CRT interface** with silver accents and a live event log.
+- **Interactive desktop deck:** click on-screen buttons to test their actions.
+- **JSON profiles:** create, rename, duplicate, delete, and switch between configurations.
+- **USB serial communication** with automatic reconnection.
+- **Input validation and debouncing** to reject malformed messages and reduce accidental repeated actions.
+- **Configuration backup and restore.**
+- **Linux desktop integration:** application launcher, menu entry, autostart, and optional device-triggered startup.
+- **Security-conscious design:** serial messages identify buttons; they do not directly execute commands.
+- **Automated tests** for protocol handling, profiles, storage, actions, and other components.
+
+## HARDWARE
+
+You need:
+
+- An ESP32 development board.
+- Four push buttons.
+- Jumper wires.
+- A USB cable capable of data transfer.
+- A Linux computer.
+
+### WIRING DIAGRAM
+
+All four buttons share the same GND connection.
+
+| ESP32 pin | Connect to |
+|---|---|
+| GPIO 18 | Button 1 |
+| GPIO 19 | Button 2 |
+| GPIO 21 | Button 3 |
+| GPIO 22 | Button 4 |
+| GND | One side of all four buttons |
+
+Connect the other side of each button to its assigned GPIO pin.
+
+The firmware uses `INPUT_PULLUP`, so external pull-up resistors are not required.
+
+## HOW IT WORKS
+
+```text
+       FOUR PHYSICAL BUTTONS
+                 |
+                 v
+              ESP32
+                 |
+          USB SERIAL / 115200
+                 |
+                 v
+       ABNO DECK DESKTOP APP
+                 |
+       +---------+---------+
+       |         |         |
+    LAUNCH     SHORTCUT   MEDIA
+       |         |         |
+       v         v         v
+    LINUX APPS  KEYBOARD  PLAYER
+```
+
+The ESP32 sends simple text messages over USB serial:
+
+| Message | Meaning |
+|---|---|
+| `ABNODECK:READY` | Firmware startup handshake |
+| `BUTTON:1` | Button 1 pressed |
+| `BUTTON:2` | Button 2 pressed |
+| `BUTTON:3` | Button 3 pressed |
+| `BUTTON:4` | Button 4 pressed |
+
+The desktop application validates incoming messages and maps accepted button IDs to locally configured actions.
+
+## ESP32 FIRMWARE
+
+Upload the ABNO DECK firmware to your ESP32 using the Arduino IDE or another compatible development environment.
+
+The firmware uses GPIO pins 18, 19, 21, and 22 and sends serial messages at **115200 baud**.
+
+Example firmware structure:
+
+```cpp
 const int buttons[] = {18, 19, 21, 22};
 const int buttonCount = 4;
 
-int lastReading[buttonCount] = {HIGH, HIGH, HIGH, HIGH};
-int stableState[buttonCount] = {HIGH, HIGH, HIGH, HIGH};
-unsigned long lastChange[buttonCount] = {0, 0, 0, 0};
+int lastReading[buttonCount] = {
+    HIGH, HIGH, HIGH, HIGH
+};
+
+int stableState[buttonCount] = {
+    HIGH, HIGH, HIGH, HIGH
+};
+
+unsigned long lastChange[buttonCount] = {
+    0, 0, 0, 0
+};
 
 const unsigned long debounceMs = 35;
 
 void setup() {
-  Serial.begin(115200);
+    Serial.begin(115200);
 
-  for (int i = 0; i < buttonCount; i++) {
-    pinMode(buttons[i], INPUT_PULLUP);
-  }
+    for (int i = 0; i < buttonCount; i++) {
+        pinMode(buttons[i], INPUT_PULLUP);
+    }
 
-  delay(300);
-  Serial.println("ABNODECK:READY");
+    delay(300);
+    Serial.println("ABNODECK:READY");
 }
 
 void loop() {
-  unsigned long now = millis();
+    unsigned long now = millis();
 
-  for (int i = 0; i < buttonCount; i++) {
-    int reading = digitalRead(buttons[i]);
+    for (int i = 0; i < buttonCount; i++) {
+        int reading = digitalRead(buttons[i]);
 
-    if (reading != lastReading[i]) {
-      lastChange[i] = now;
-      lastReading[i] = reading;
+        if (reading != lastReading[i]) {
+            lastChange[i] = now;
+            lastReading[i] = reading;
+        }
+
+        if ((now - lastChange[i]) >= debounceMs &&
+            reading != stableState[i]) {
+            stableState[i] = reading;
+
+            if (stableState[i] == LOW) {
+                Serial.print("BUTTON:");
+                Serial.println(i + 1);
+            }
+        }
     }
+}
+```
 
-    if ((now - lastChange[i]) >= debounceMs &&
-        reading != stableState[i]) {
-      stableState[i] = reading;
+If your repository contains the complete firmware as a separate file, use that file as the source of truth.
 
-      // INPUT_PULLUP means LOW = pressed.
-      if (stableState[i] == LOW) {
-        Serial.print("BUTTON:");
-        Serial.println(i + 1);
-      }
-    }
-  }
-} '
+## INSTALLATION
 
+**Designed for Debian 13 (Trixie), including the MATE desktop.**
 
-*/
+Clone the repository:
 
-
-A DIY 4-key stream deck for Linux + ESP32.
-ABNO DECK is a desktop controller for a homemade stream deck: an ESP32 development board with four push buttons, connected over USB. Pressing a physical key launches applications, opens websites, sends keyboard shortcuts, controls media or runs a validated command — and the on-screen deck shows exactly what each key does.
-Python 3 · PySide6 GUI · pyserial · JSON configuration
-Designed for Debian 13 (trixie) and the MATE desktop (X11 and Wayland)
-No Windows, no Electron, no cloud, no paid APIs, no telemetry
-The GUI is dark cyberpunk/CRT themed with subtle silver accents, a live event log and a 2×2 deck preview that works as a real test surface
-
-1. How it works
-ESP32 (4 buttons on GPIO 18/19/21/22)                 Debian workstation
-  │  USB serial, 115200 baud                          │
-  │  "ABNODECK:READY"  ←── handshake on boot          │
-  │  "BUTTON:1" … "BUTTON:4" ←── press events         │
-  └────────────── /dev/ttyUSB0 / ttyACM0 ─────────────┘
-                   ABNO DECK (Python)
-                   ├─ strict protocol parser (only IDs 1-4 are accepted)
-                   ├─ profile store  ~/.config/abno-deck/*.json
-                   └─ action runner  (launch / URL / shortcut / media / command)
-Security model — read this once, it matters:
-The ESP32 only sends button identifiers. The desktop application owns the entire action mapping; nothing received over serial is ever interpreted as a command. Unknown or malformed lines are logged and dropped.
-Application launches and commands use argument lists, not a shell. Shell syntax (|, ;, >, $(…)) for custom commands requires an explicit opt-in checkbox and an optional confirmation dialog.
-The app is never run as root/sudo. Serial port access is granted with the dialout group or a uaccess udev rule (see §5).
-Actions run on a background thread pool, so the GUI never blocks or freezes.
-
-2. Hardware and firmware protocol
-Four push buttons wired between the GPIO pins and GND, using the ESP32's internal pull-ups:
-Button	GPIO
-1	GPIO18
-2	GPIO19
-3	GPIO21
-4	GPIO22
-The firmware must send UTF-8 text lines at 115200 baud:
-Message	Meaning
-ABNODECK:READY	Boot/reset handshake
-BUTTON:1…BUTTON:4	A button was pressed
-Anything else (BUTTON:0, BUTTON:9, garbage, binary noise) is rejected by the desktop parser with a log entry — ABNO DECK debounces repeat events again on the PC side as a second safeguard, auto-reconnects after unplugging, and never opens the same port twice (OS-level exclusive lock).
-Startup safety — pressing keys can never fire when the app connects. Opening the serial port resets most ESP32 boards (DTR/RTS). Everything that arrives in the wake of that reset — kernel-buffered backlog from while nothing was listening, replayed state, boot pin glitches that pass a naive firmware debounce — arrives as a burst of syntactically valid BUTTON:1..4 lines. ABNO DECK therefore:
-discards bytes that were already buffered in the kernel before the port was opened (logged with the byte count), including a cut-off partial line,
-validates and logs every incoming line, but does not dispatch button events during a bounded startup window: READY + 0.5 s (or, if the device never sends READY, a short window after opening that the first ignored press shortens),
-dispatches every validated press after the window exactly once,
-keeps the reader alive through unexpected errors: the port is always released and the connection retried, so one bad line or a device reset can never stop the physical buttons permanently.
-
-3. Installation (Debian 13)
+```bash
+git clone https://github.com/abnox43/abno-deck.git
 cd abno-deck
+```
+
+Run the installer:
+
+```bash
 ./install.sh --extras
-install.sh installs for your user only:
-Python dependencies from Debian packages (python3-pyserial, python3-pyside6.*) — with an automatic virtualenv+pip fallback if the packages are unavailable,
-the application in ~/.local/share/abno-deck/,
-a launcher at ~/.local/bin/abno-deck,
-a menu entry (abno-deck.desktop) and icon,
-start-at-login via ~/.config/autostart/ (disable with --no-autostart),
-with --extras: xdotool (keyboard shortcuts), playerctl (media) and xdg-utils.
-Useful flags:
-./install.sh --dialout      # add your user to the dialout group (serial access)
-./install.sh --udev         # install the uaccess udev rule instead (see §5)
-./install.sh --auto-launch  # opt-in: start the GUI when the ESP32 is plugged in
-./install.sh --no-deps      # skip apt (dependencies already present)
-./install.sh --no-autostart # do not start ABNO DECK at desktop login
-Run without installing
-sudo apt install python3-pyserial python3-pyside6.qtwidgets \
-                 python3-pyside6.qtgui python3-pyside6.qtcore xdotool playerctl
-cd abno-deck
-python3 main.py
-Launch after installing
-abno-deck                 # from a terminal
-# or: Applications → Accessories → ABNO DECK
-abno-deck --doctor        # environment report (ports, deps, profiles)
+```
 
-4. First run
-Plug the ESP32 in. ABNO DECK auto-detects common ESP32 USB bridges (CP210x, CH340, native CDC, FTDI) and connects at 115200 baud. The header indicator shows DISCONNECTED → CONNECTING → CONNECTED and the event log shows the ABNODECK:READY handshake.
-The default profile contains four working example keys: Terminal (x-terminal-emulator), Web (opens the default browser), Play/Pause (MPRIS) and Lock (Ctrl+Alt+L).
-Click any on-screen key to test its action; click the ⚙ button on a key to configure it. Physical presses appear in the log with a phosphor flash on the matching key.
-Use the profile selector to create, rename, duplicate or delete profiles. Every change is saved immediately — there is no "Save" button to forget.
-Import the bundled sample profile:
-cp ~/.local/share/abno-deck/app/sample-profile.json \
-   ~/.config/abno-deck/profiles/sample.json
-# then restart ABNO DECK (or press "Refresh" in Settings after a restore)
+The installer is designed to install the application for your user, set up its launcher and menu entry, and configure desktop autostart unless disabled.
 
-5. Serial port permissions — never use sudo to run the app
-Check what you have:
-ls -l /dev/ttyUSB* /dev/ttyACM*
-groups | grep dialout
-Option A — dialout group (simplest):
-sudo usermod -aG dialout "$USER"
-# log out and back in, then plug the ESP32 in again
-Option B — uaccess udev rule (no group, per-seat):
-./install.sh --udev        # installs packaging/99-abno-deck.rules
-The rule only sets TAG+="uaccess" so logind grants the logged-in user access. It never launches a GUI — starting a graphical app from a root udev rule is unsafe (wrong session, wrong environment, privilege escalation surface).
-If opening the port still fails, the event log prints the exact diagnosis and fix (missing permission vs. port busy vs. device vanished), e.g.:
-ERROR  permission denied for /dev/ttyUSB0
-WARN   No permission for /dev/ttyUSB0. Fix it without sudo-ing the app:
-WARN     ls -l /dev/ttyUSB0
-WARN     sudo usermod -aG dialout "$USER"   (log out and back in)
+Optional installer flags:
 
-6. Optional: auto-launch when the ESP32 is plugged in (opt-in)
-./install.sh --auto-launch
-This installs a systemd user path unit — the safe alternative to launching GUIs from udev:
-~/.config/systemd/user/abno-deck-watch.path watches /dev/serial/by-id (which only exists while a USB serial adapter is present),
-when it becomes non-empty it starts abno-deck-watch.service,
-that service runs ~/.local/bin/abno-deck as your user, inside your login session — never as root.
-Limitations, stated honestly:
-It only works while you are logged in (a systemd --user session must run).
-It triggers on the device node appearing, not on the ABNODECK:READY message; the app then performs the real handshake itself.
-It assumes DISPLAY=:0 (fine on a normal single-seat MATE/X11 install).
-If your system does not create /dev/serial/by-id (rare), it will not fire; start the app manually or from the menu.
-Disable it:
-systemctl --user disable --now abno-deck-watch.path
-The app also always tries to reconnect on its own, so leaving it running works just as well if you prefer no auto-launch at all.
+| Command | Purpose |
+|---|---|
+| `./install.sh --no-autostart` | Disable desktop-login autostart |
+| `./install.sh --no-deps` | Skip dependency installation |
+| `./install.sh --dialout` | Configure serial access using the `dialout` group |
+| `./install.sh --udev` | Install the optional udev permission rule |
+| `./install.sh --auto-launch` | Enable optional startup when the ESP32 is connected |
 
-7. Button actions
-Action	What it does	Needs
-Launch application	Starts an executable + arguments (no shell)	the program installed
-Open website	Hands an http(s):// URL to the default browser	gio or xdg-open
-Keyboard shortcut	e.g. Ctrl+Alt+T via xdotool (X11) or wtype/ydotool (Wayland)	one of those tools
-Media control	Play/Pause, next, previous, volume via MPRIS	playerctl (or dbus-send)
-Custom command	Runs a command you wrote, with a warning, validation, optional shell opt-in and confirmation dialog	—
-Do nothing	Idle key (still named/iconed)	—
-Missing dependencies are reported with the exact install command — for example on Wayland, xdotool cannot inject keys and ABNO DECK tells you to install wtype instead of silently failing. Failures are always shown as failures in the event log and status bar.
-The searchable application picker reads ~/.local/share/applications, /usr/local/share/applications and /usr/share/applications (freedesktop .desktop entries, field codes resolved, hidden entries skipped).
+Review the installer before running it, especially when installing software from any source you have not personally verified.
 
-8. Configuration, profiles, backup
-Everything lives under ~/.config/abno-deck/ (override with --config-dir or ABNO_DECK_CONFIG_DIR):
+## FIRST RUN
+
+1. Connect the ESP32 to your computer using USB.
+2. Launch ABNO DECK from your application menu or terminal.
+3. Wait for the serial connection to establish.
+4. Check the connection status and event log.
+5. Press a physical button to test its assigned action.
+6. Click a button's settings icon to customize its behavior.
+
+The default profile provides example actions for launching a terminal, opening a browser, controlling media playback, and locking the screen. Availability depends on your desktop environment and installed applications.
+
+## BUTTON ACTIONS
+
+| Action | Description |
+|---|---|
+| Launch application | Start an executable with arguments |
+| Open website | Open an HTTP or HTTPS URL in the default browser |
+| Keyboard shortcut | Send a supported shortcut using the available input tool |
+| Media control | Play, pause, skip tracks, or adjust volume where supported |
+| Custom command | Execute a configured command subject to validation and safety settings |
+| Do nothing | Keep a button available without triggering an action |
+
+Keyboard injection differs between X11 and Wayland. Install the appropriate supported utility for your session.
+
+## CONFIGURATION AND PROFILES
+
+ABNO DECK stores user configuration under:
+
+```text
 ~/.config/abno-deck/
-├── settings.json        # active profile, serial port, debounce, window size
+├── settings.json
 ├── profiles/
-│   ├── default.json     # created automatically on first run
-│   └── work.json        # one file per profile
-├── backups/             # reserved for backups
-└── abno-deck.log        # rotating application log
-Profiles are validated on load. Corrupt files are never deleted: they are quarantined as <name>.corrupt-<timestamp> and a warning appears in the event log while a working default is rebuilt. Saves are atomic (temp file + rename), so a crash mid-save cannot corrupt your configuration.
-Backup / restore — in Settings → Configuration backup, or from the CLI:
-cd ~/.local/share/abno-deck/app
-python3 -m src.backup create -o ~/abno-deck-backup.zip
-python3 -m src.backup restore ~/abno-deck-backup.zip
-Restoring validates every profile first and keeps a copy of the current configuration (abno-deck-pre-restore-<ts>/) before replacing anything.
+├── backups/
+└── abno-deck.log
+```
 
-9. Troubleshooting
-Symptom	Fix
-permission denied for /dev/ttyUSB0	§5 — dialout group or udev rule, then re-login
-/dev/ttyUSB0 is busy	Close serial monitors / other instances
-Stuck on CONNECTING	Check the cable/port: abno-deck --doctor; press the ESP32 reset button
-A key pressed immediately after connecting does nothing	By design: the first ~0.5 s after the handshake discard reset/buffered noise. The log shows Ignored BUTTON:n ... startup window. Press the key again.
-"no READY was received" warning	Port works, firmware doesn't send the handshake — check the firmware
-Shortcut fails on Wayland	Install wtype (or ydotool + running ydotoold)
-Media action: "no MPRIS player found"	Start a player, or sudo apt install playerctl
-No emoji icons	Install a colour emoji font: sudo apt install fonts-noto-color-emoji
-App won't start after install	abno-deck --doctor and tail -f ~/.config/abno-deck/abno-deck.log
-Logs: ~/.config/abno-deck/abno-deck.log (DEBUG level, rotating).
+Profiles use JSON files. The application validates profiles on load and is designed to recover from corrupted configuration files without silently deleting the original corrupted data.
 
-10. Development
-cd abno-deck
-python3 -m unittest discover -s tests -t .   # 105+ tests, stdlib only
-QT_QPA_PLATFORM=offscreen python3 tests/smoke_gui.py   # headless GUI smoke test
-Layout:
-main.py                     entry point (--doctor, --no-serial, --port, --profile)
-src/
-├── constants.py            protocol + app constants
-├── protocol.py             strict serial message parser (pure, tested)
-├── debounce.py             desktop-side debounce safeguard (pure)
-├── ports.py                ESP32 serial port discovery
-├── serial_io.py            SerialManager + background worker (Qt)
-├── models.py               button/profile sanitising + validation (pure)
-├── storage.py              atomic JSON writes, quarantine/recovery
-├── profiles.py             ProfileStore: CRUD + settings + autosave
-├── backup.py               ZIP backup/restore (+ CLI)
-├── deps.py                 tool/session detection with install hints
-├── desktop_entries.py      .desktop parsing for the app picker
-├── actions/                validate() + execute() for all six action types
-└── gui/                    theme, deck, editor, settings, main window
-tests/                      protocol, debounce, models, profiles, backup,
-                            ports, action execution, serial integration (pty)
-packaging/                  .desktop template, udev rule, systemd user units
-Architecture rules the code follows:
-parsing/validation logic is Qt-free and unit tested,
-the GUI thread never performs I/O: serial on a thread, actions on a pool,
-every emitted signal carries the real outcome — success is only claimed when the underlying operation actually returned success.
+Changes are saved automatically.
 
-11. Uninstall
-cd abno-deck
-./uninstall.sh            # keeps ~/.config/abno-deck
-./uninstall.sh --purge    # also deletes profiles and settings
-The script removes the app, launcher, menu entry, autostart entry, the user systemd units and the udev rule (it asks sudo only for the udev rule).
+Configuration can be backed up and restored through the application's settings interface or supported command-line tools.
 
-License
-MIT — see LICENSE.
+## SECURITY
+
+**The ESP32 sends button identifiers, not shell commands.**
+
+ABNO DECK validates incoming serial messages and rejects unsupported button IDs and malformed input.
+
+Application launches use executable arguments rather than automatically interpreting received serial data as shell syntax. Custom commands have additional validation and safety controls.
+
+Other protections include:
+
+- Serial-side protocol validation.
+- Desktop-side debouncing.
+- Startup handling for buffered data and device resets.
+- Background execution to keep the GUI responsive.
+- User-level application execution instead of running the desktop application as root.
+- Configuration validation and atomic saves.
+
+No security mechanism should be considered infallible. Review the source code and use caution when configuring commands that can modify your system.
+
+## TROUBLESHOOTING
+
+| Problem | What to check |
+|---|---|
+| Serial permission denied | Configure `dialout` or the documented udev rule |
+| Serial port busy | Close other serial monitors or application instances |
+| Stuck on CONNECTING | Check the USB cable, port, and firmware handshake |
+| First press is ignored | Check the startup safety window and event log |
+| Keyboard shortcut fails | Check X11/Wayland compatibility and installed input tools |
+| Media control fails | Check for a running media player and MPRIS support |
+| Application fails to launch | Run `abno-deck --doctor` and inspect the application log |
+
+Logs are stored at:
+
+```text
+~/.config/abno-deck/abno-deck.log
+```
+
+## DEVELOPMENT AND TESTING
+
+Run the test suite from the repository root:
+
+```bash
+python3 -m unittest discover -s tests -t .
+```
+
+Run the GUI smoke test:
+
+```bash
+QT_QPA_PLATFORM=offscreen python3 tests/smoke_gui.py
+```
+
+The project separates protocol parsing, validation, configuration storage, action handling, serial communication, and GUI components to make testing and maintenance easier.
+
+## UNINSTALL
+
+Run:
+
+```bash
+./uninstall.sh
+```
+
+To also remove saved profiles and settings:
+
+```bash
+./uninstall.sh --purge
+```
+
+Review the effects before using the purge option.
+
+## LICENSE
+
+ABNO DECK is distributed under the **MIT License**. See [`LICENSE`](LICENSE) for the full terms.
+
+The MIT License permits reuse, modification, and redistribution subject to its conditions, including preservation of applicable copyright and license notices.
+
+**Open source means people can build on your work. It does not mean your authorship should be misrepresented.**
+
+---
+
+# MADE BY ABNOX.
+
+**NOT MADE BY YOU. NOT CREATED BY SOME RANDOM ACCOUNT. MADE BY ABNOX.**
+
+**IF YOU FORK IT, CREDIT THE ORIGINAL PROJECT.**
+
+[GitHub Repository](https://github.com/abnox43/abno-deck)
