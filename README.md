@@ -1,5 +1,13 @@
 ABNO DECK
 MADE BY ME
+the esp wiring 
+all four buttons share the same GND pin!
+ESP32 pin	Connect to
+GPIO 18	Button 1
+GPIO 19	Button 2
+GPIO 21	Button 3
+GPIO 22	Button 4
+GND	One side of ALL four buttons
 *THE ESP 32 DEV MODULE CODE*
 ' 
 const int buttons[] = {18, 19, 21, 22};
