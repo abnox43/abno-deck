@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "id": "sample",
+  "name": "Sample Profile",
+  "created": "2026-01-01T12:00:00+0000",
+  "buttons": [
+    {
+      "slot": 1,
+      "name": "Files",
+      "icon": "📁",
+      "action": {
+        "type": "launch_app",
+        "executable": "caja",
+        "arguments": ""
+      }
+    },
+    {
+      "slot": 2,
+      "name": "Wiki",
+      "icon": "🌐",
+      "action": {
+        "type": "open_url",
+        "url": "https://wiki.debian.org"
+      }
+    },
+    {
+      "slot": 3,
+      "name": "Vol +",
+      "icon": "🔊",
+      "action": {
+        "type": "media",
+        "command": "volume_up"
+      }
+    },
+    {
+      "slot": 4,
+      "name": "Test cmd",
+      "icon": "🧪",
+      "action": {
+        "type": "command",
+        "command": "echo \"hello from ABNO DECK\" > /tmp/abno-deck-test.txt",
+        "use_shell": true,
+        "confirm": true
+      }
+    }
+  ]
+}

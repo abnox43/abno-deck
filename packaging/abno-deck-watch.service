@@ -1,0 +1,13 @@
+[Unit]
+Description=ABNO DECK stream deck GUI (user session)
+After=graphical-session.target
+
+[Service]
+Type=exec
+ExecStart=__WRAPPER__
+Environment=DISPLAY=:0
+# The GUI opens the serial port itself (auto-detect) and reconnects on its own.
+Restart=no
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,23 @@
+# ABNO DECK - serial port permissions for the logged-in user (opt-in)
+#
+# Installed by:  ./install.sh --udev
+#
+# IMPORTANT DESIGN NOTE
+# --------------------
+# This rule ONLY changes device permissions / access tags. It never launches a
+# graphical application: udev runs as root and starting a GUI from there is
+# unsafe (wrong X11/Wayland session, no user environment, privilege problems).
+#
+# The optional "start the app when the ESP32 is plugged in" feature is
+# implemented by install.sh --auto-launch as a systemd *user* path unit
+# (~/.config/systemd/user/abno-deck-watch.path), which runs inside your login
+# session as your own user.
+#
+# TAG+="uaccess" hands the device to the active seat user through logind, so
+# you do not need to add yourself to the dialout group. If your setup does not
+# support uaccess (e.g. SSH-only logins), use instead:
+#     sudo usermod -aG dialout "$USER"     # then log out and back in
+#
+# Applies to the usual ESP32 USB bridges: CP210x, CH340/CH341, native USB CDC,
+# FTDI and Arduino-compatible IDs.
+ACTION=="add", SUBSYSTEM=="tty", KERNEL=="ttyUSB[0-9]*|ttyACM[0-9]*", TAG+="uaccess"

@@ -1,0 +1,13 @@
+[Unit]
+Description=ABNO DECK - launch the stream deck GUI when an ESP32 is plugged in
+Documentation=https://github.com/abno-deck/abno-deck
+
+# /dev/serial/by-id only exists while at least one USB serial adapter is
+# present. The unit triggers when that directory becomes non-empty, i.e. when
+# you plug the ESP32 in. This runs inside your login session - nothing is ever
+# launched as root.
+[Path]
+DirectoryNotEmpty=/dev/serial/by-id
+
+[Install]
+WantedBy=default.target

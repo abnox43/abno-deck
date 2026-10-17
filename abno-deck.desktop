@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ABNO DECK
+GenericName=Stream Deck Controller
+Comment=DIY 4-key stream deck for an ESP32 over USB
+Exec=__EXEC__
+TryExec=__EXEC__
+Icon=abno-deck
+Terminal=false
+Categories=Utility;HardwareSettings;GTK;
+Keywords=stream;deck;esp32;macro;shortcut;keyboard;button;serial;
+StartupNotify=true
+StartupWMClass=abno-deck
+X-GNOME-UsesNotifications=false

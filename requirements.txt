@@ -1,0 +1,17 @@
+# ABNO DECK runtime dependencies (Debian 13 / trixie)
+#
+# Preferred installation on Debian 13 - no pip needed:
+#   sudo apt install python3-pyserial python3-pyside6.qtwidgets python3-pyside6.qtgui
+#
+# pip equivalents (use a virtualenv, see install.sh):
+PySide6>=6.5
+pyserial>=3.5
+
+# Optional tools detected at runtime (install what you need):
+#   xdotool      - keyboard shortcuts on X11
+#   wtype        - keyboard shortcuts on Wayland (wlroots)
+#   ydotool      - keyboard shortcuts via uinput (needs ydotoold)
+#   playerctl    - media playback control via MPRIS
+#   xdg-utils    - opening URLs in the default browser (gio also works)
+#
+# Tests run on the standard library (unittest); pytest works too if installed.
