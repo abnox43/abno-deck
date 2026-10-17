@@ -8,8 +8,10 @@ GPIO 19	Button 2
 GPIO 21	Button 3
 GPIO 22	Button 4
 GND	One side of ALL four buttons
-*THE ESP 32 DEV MODULE CODE*
-' 
+
+/*
+
+
 const int buttons[] = {18, 19, 21, 22};
 const int buttonCount = 4;
 
@@ -54,6 +56,8 @@ void loop() {
   }
 } '
 
+
+*/
 
 
 A DIY 4-key stream deck for Linux + ESP32.
